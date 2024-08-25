@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "install_to_nier",
+      "command": "cp",
+      "args": [
+        "${workspaceFolder}/build/Debug/xinput1_4.dll",
+        "${env:NIER_DIR}/xinput1_4.dll"
+      ],
+      "group": {
+        "kind": "none"
+      },
+      "detail": "Copies debug dll to nier install dir"
+    }
+  ],
+  "version": "2.0.0"
+}
