@@ -15,6 +15,7 @@ struct Addresses {
 	u64 playerLocation;
 	u64 unitData;
 	u64 windowMode;
+	u64 stickState;
 };
 
 } // namespace AutomataMod

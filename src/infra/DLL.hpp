@@ -4,15 +4,15 @@
 #include <Windows.h>
 #include <string>
 
-class DLLHook {
+class DLL {
 	HMODULE m_module;
 
 public:
-	DLLHook(const std::string &moduleName);
-	~DLLHook();
+	DLL(const std::string &moduleName, bool useSystemDir = true);
+	~DLL();
 	bool isModuleFound() const;
 
-	template <typename FuncPtr> FuncPtr hookFunc(const std::string &funcName) {
+	template <typename FuncPtr> FuncPtr getFunc(const std::string &funcName) {
 		AutomataMod::log(AutomataMod::LogLevel::LOG_INFO, "Hooking {}", funcName);
 		if (!m_module) {
 			return nullptr;

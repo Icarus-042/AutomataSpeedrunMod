@@ -12,7 +12,7 @@
 #include "AutomataMod.hpp"
 #include "com/FactoryWrapper.hpp"
 #include "com/WrapperPointer.hpp"
-#include "infra/DLLHook.hpp"
+#include "infra/DLL.hpp"
 #include "infra/HashCheck.hpp"
 #include "infra/IAT.hpp"
 #include "infra/Log.hpp"
@@ -24,7 +24,7 @@ using namespace AutomataMod;
 namespace {
 
 WORD lastXInputButtons = 0;
-std::unique_ptr<DLLHook> xinput;
+std::unique_ptr<DLL> xinput;
 std::unique_ptr<std::thread> checkerThread;
 std::unique_ptr<IAT::IATHook> d3dCreateDeviceHook;
 std::unique_ptr<IAT::IATHook> dxgiCreateFactoryHook;
@@ -108,6 +108,7 @@ void init() {
 		addresses.playerLocation = 0x12553E0;
 		addresses.unitData = 0x14944C8;
 		addresses.windowMode = 0x1421F38;
+		addresses.stickState = 0x13fcc10;
 	} else {
 		log(LogLevel::LOG_ERROR, "Unsupported Nier version: {}", version.value().versionName());
 		return;
@@ -125,17 +126,16 @@ void init() {
 	}));
 }
 
-template <typename FuncPtr> FuncPtr hookFunc(const std::string &funcName) {
+template <typename FuncPtr> FuncPtr getXinputFunc(const std::string &funcName) {
 	if (!xinput) {
-		xinput = std::unique_ptr<DLLHook>(new DLLHook("xinput1_4.dll"));
+		xinput = std::make_unique<DLL>(XINPUT_DLL_A);
 		if (!xinput->isModuleFound()) {
-			log(LogLevel::LOG_ERROR, "Failed to load xinput1_4.dll. VC3 Mod and Automata "
-															 "will probably crash now.");
+			log(LogLevel::LOG_ERROR, "Failed to load {}. VC3 Mod and Automata will probably crash now.", XINPUT_DLL_A);
 			return nullptr;
 		}
 	}
 
-	return xinput->hookFunc<FuncPtr>(funcName);
+	return xinput->getFunc<FuncPtr>(funcName);
 }
 
 } // namespace
@@ -150,6 +150,7 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID) {
 		dxgiCreateFactoryHook = std::unique_ptr<IAT::IATHook>(
 				new IAT::IATHook("dxgi.dll", "CreateDXGIFactory", (LPCVOID)CreateDXGIFactoryHooked)
 		);
+
 		shouldStopChecker = false;
 		init();
 	} else if (reason == DLL_PROCESS_DETACH) {
@@ -176,7 +177,7 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID) {
 }
 
 void WINAPI XInputEnable(_In_ BOOL enable) WIN_NOEXCEPT {
-	static auto ptr = hookFunc<void(WINAPI *)(BOOL)>("XInputEnable");
+	static auto ptr = getXinputFunc<void(WINAPI *)(BOOL)>("XInputEnable");
 	if (!ptr)
 		return;
 	ptr(enable);
@@ -186,7 +187,7 @@ DWORD WINAPI XInputGetAudioDeviceIds(
 		_In_ DWORD dwUserIndex, _Out_writes_opt_(*pRenderCount) LPWSTR pRenderDeviceId, _Inout_opt_ UINT *pRenderCount,
 		_Out_writes_opt_(*pCaptureCount) LPWSTR pCaptureDeviceId, _Inout_opt_ UINT *pCaptureCount
 ) WIN_NOEXCEPT {
-	static auto ptr = hookFunc<DWORD(WINAPI *)(DWORD, LPWSTR, UINT *, LPWSTR, UINT *)>("XInputGetAudioDeviceIds");
+	static auto ptr = getXinputFunc<DWORD(WINAPI *)(DWORD, LPWSTR, UINT *, LPWSTR, UINT *)>("XInputGetAudioDeviceIds");
 	if (!ptr)
 		return ERROR_DEVICE_NOT_CONNECTED;
 	return ptr(dwUserIndex, pRenderDeviceId, pRenderCount, pCaptureDeviceId, pCaptureCount);
@@ -195,7 +196,8 @@ DWORD WINAPI XInputGetAudioDeviceIds(
 DWORD WINAPI XInputGetBatteryInformation(
 		_In_ DWORD dwUserIndex, _In_ BYTE devType, _Out_ XINPUT_BATTERY_INFORMATION *pBatteryInformation
 ) WIN_NOEXCEPT {
-	static auto ptr = hookFunc<DWORD(WINAPI *)(DWORD, BYTE, XINPUT_BATTERY_INFORMATION *)>("XInputGetBatteryInformation");
+	static auto ptr =
+			getXinputFunc<DWORD(WINAPI *)(DWORD, BYTE, XINPUT_BATTERY_INFORMATION *)>("XInputGetBatteryInformation");
 	if (!ptr)
 		return ERROR_DEVICE_NOT_CONNECTED;
 	return ptr(dwUserIndex, devType, pBatteryInformation);
@@ -203,7 +205,7 @@ DWORD WINAPI XInputGetBatteryInformation(
 
 DWORD WINAPI XInputGetCapabilities(_In_ DWORD dwUserIndex, _In_ DWORD dwFlags, _Out_ XINPUT_CAPABILITIES *pCapabilities)
 		WIN_NOEXCEPT {
-	static auto ptr = hookFunc<DWORD(WINAPI *)(DWORD, DWORD, XINPUT_CAPABILITIES *)>("XInputGetCapabilities");
+	static auto ptr = getXinputFunc<DWORD(WINAPI *)(DWORD, DWORD, XINPUT_CAPABILITIES *)>("XInputGetCapabilities");
 	if (!ptr)
 		return ERROR_DEVICE_NOT_CONNECTED;
 	return ptr(dwUserIndex, dwFlags, pCapabilities);
@@ -211,14 +213,14 @@ DWORD WINAPI XInputGetCapabilities(_In_ DWORD dwUserIndex, _In_ DWORD dwFlags, _
 
 DWORD WINAPI XInputGetKeystroke(_In_ DWORD dwUserIndex, _Reserved_ DWORD dwReserved, _Out_ PXINPUT_KEYSTROKE pKeystroke)
 		WIN_NOEXCEPT {
-	static auto ptr = hookFunc<DWORD(WINAPI *)(DWORD, DWORD, XINPUT_KEYSTROKE *)>("XInputGetKeystroke");
+	static auto ptr = getXinputFunc<DWORD(WINAPI *)(DWORD, DWORD, XINPUT_KEYSTROKE *)>("XInputGetKeystroke");
 	if (!ptr)
 		return ERROR_DEVICE_NOT_CONNECTED;
 	return ptr(dwUserIndex, dwReserved, pKeystroke);
 }
 
 DWORD WINAPI XInputGetState(_In_ DWORD dwUserIndex, _Out_ XINPUT_STATE *pState) WIN_NOEXCEPT {
-	static auto ptr = hookFunc<DWORD(WINAPI *)(DWORD, XINPUT_STATE *)>("XInputGetState");
+	static auto ptr = getXinputFunc<DWORD(WINAPI *)(DWORD, XINPUT_STATE *)>("XInputGetState");
 	if (!ptr)
 		return ERROR_DEVICE_NOT_CONNECTED;
 
@@ -240,7 +242,7 @@ DWORD WINAPI XInputGetState(_In_ DWORD dwUserIndex, _Out_ XINPUT_STATE *pState) 
 }
 
 DWORD WINAPI XInputSetState(_In_ DWORD dwUserIndex, _In_ XINPUT_VIBRATION *pVibration) WIN_NOEXCEPT {
-	static auto ptr = hookFunc<DWORD(WINAPI *)(DWORD, XINPUT_VIBRATION *)>("XInputSetState");
+	static auto ptr = getXinputFunc<DWORD(WINAPI *)(DWORD, XINPUT_VIBRATION *)>("XInputSetState");
 	if (!ptr)
 		return ERROR_DEVICE_NOT_CONNECTED;
 	return ptr(dwUserIndex, pVibration);

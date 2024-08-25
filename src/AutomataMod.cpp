@@ -101,7 +101,8 @@ ModChecker::ModChecker(Addresses addrs)
 		, _modActive(true)
 		, _lastModActive(true)
 		, _inMenu(true)
-		, _lastInMenu(true) {}
+		, _lastInMenu(true)
+		, _stickState(getOffset<StickState>(_addresses.stickState)) {}
 
 void ModChecker::checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrapper> factoryWrapper) {
 	if (_lastWindowMode != *_windowMode) {

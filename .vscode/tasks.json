@@ -5,8 +5,8 @@
       "label": "install_to_nier",
       "command": "cp",
       "args": [
-        "${workspaceFolder}/build/Debug/xinput1_4.dll",
-        "${env:NIER_DIR}/xinput1_4.dll"
+        "'${workspaceFolder}/build/Debug/xinput1_4.dll'",
+        "'${env:NIER_DIR}/xinput1_4.dll'"
       ],
       "group": {
         "kind": "none"
