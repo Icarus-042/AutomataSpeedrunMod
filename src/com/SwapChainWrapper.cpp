@@ -25,6 +25,22 @@ const D2D1_BITMAP_PROPERTIES1 BITMAP_PROPERTIES = {
 
 } // namespace
 
+namespace {
+
+int frameCounter = 0;
+
+// I couldn't get the ModChecker working here to get the
+// pointers for joystickMagnitude so I just did the pointer
+// stuff here.
+const auto processRamStartAddr = reinterpret_cast<uintptr_t>(GetModuleHandle(nullptr));
+
+float leftStickVertical = 0;
+float leftStickHorizontal = 0;
+
+float joystickMagnitude = 0;
+
+} // namespace
+
 namespace DxWrappers {
 
 void DXGISwapChainWrapper::renderWatermark() {
@@ -57,8 +73,8 @@ void DXGISwapChainWrapper::renderWatermark() {
 		resetLocation(screenSize);
 	}
 
-	float xscale = screenSize.width * (1.f / SCREEN_WIDTH);
-	float yscale = screenSize.height * (1.f / SCREEN_HEIGHT);
+	float xscale = screenSize.width * (1.f / SCREEN_WIDTH) * 1.2;
+	float yscale = screenSize.height * (1.f / SCREEN_HEIGHT) * 1.2;
 	float heightScale = WATERMARK_TEXT_SIZE * yscale;
 
 	if (!_textFormat) {
@@ -135,15 +151,34 @@ void DXGISwapChainWrapper::renderWatermark() {
 
 	std::chrono::duration<float, std::milli> frameDeltaMilli = now - _lastFrame;
 	std::wstring fpsString = calculateFps(frameDeltaMilli.count());
+	std::wstring frameCounterString = countFrames();
+	std::wstring fcAndFpsString = fmt::format(L"{} {}", fpsString, frameCounterString);
 
-	// Draw FPS Shadow
+	std::wstring stickMagnitudeString = getJoystickMagnitude(leftStickVertical, leftStickHorizontal);
+
+	// Draw FPS and Frame Counter Shadow
 	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(2, textHeight + 2));
-	_deviceContext->DrawText(fpsString.c_str(), fpsString.length(), _textFormat.Get(), rect, _shadowBrush.Get());
+	_deviceContext->DrawText(
+			fcAndFpsString.c_str(), fcAndFpsString.length(), _textFormat.Get(), rect, _shadowBrush.Get()
+	);
 	_deviceContext->SetTransform(root);
 
-	// Draw FPS Counter
+	// Draw FPS and Frame Counter
 	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(0, textHeight));
-	_deviceContext->DrawText(fpsString.c_str(), fpsString.length(), _textFormat.Get(), rect, _brush.Get());
+	_deviceContext->DrawText(fcAndFpsString.c_str(), fcAndFpsString.length(), _textFormat.Get(), rect, _brush.Get());
+
+	// Draw Joystick Magnitude shadow
+	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(2, 2 + (textHeight * 2)));
+	_deviceContext->DrawText(
+			stickMagnitudeString.c_str(), stickMagnitudeString.length(), _textFormat.Get(), rect, _shadowBrush.Get()
+	);
+	_deviceContext->SetTransform(root);
+
+	// Draw Joystick Magnitude
+	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(0, textHeight * 2));
+	_deviceContext->DrawText(
+			stickMagnitudeString.c_str(), stickMagnitudeString.length(), _textFormat.Get(), rect, _brush.Get()
+	);
 
 	_deviceContext->EndDraw();
 	_deviceContext->SetTarget(oldTarget.Get());
@@ -219,6 +254,21 @@ std::wstring DXGISwapChainWrapper::getLogo() {
 
 	return fmt::format(L"VC3Mod {} ({})", AutomataMod::Constants::getWVersion(), activatedString);
 } // namespace DxWrappers
+
+std::wstring DXGISwapChainWrapper::countFrames() {
+	++frameCounter;
+	return fmt::format(L"FC: {}", frameCounter);
+}
+
+std::wstring DXGISwapChainWrapper::getJoystickMagnitude(float leftStickVertical, float leftStickHorizontal) {
+	leftStickVertical = *reinterpret_cast<float *>(processRamStartAddr + 0x13FCC10);
+	leftStickHorizontal = *reinterpret_cast<float *>(processRamStartAddr + 0x13FCC14);
+
+	joystickMagnitude =
+			std::sqrt(leftStickVertical * leftStickVertical + leftStickHorizontal * leftStickHorizontal) * 0.001;
+
+	return fmt::format(L"Joystick Magnitude: {:.3f}", joystickMagnitude);
+}
 
 DXGISwapChainWrapper::~DXGISwapChainWrapper() {}
 
