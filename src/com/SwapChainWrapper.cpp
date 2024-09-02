@@ -1,6 +1,8 @@
 #include "SwapChainWrapper.hpp"
+#include "StickState.hpp"
 #include "infra/Log.hpp"
 #include "infra/constants.hpp"
+#include "infra/defs.hpp"
 #include <fmt/format.h>
 #include <fmt/xchar.h>
 #include <random>
@@ -21,23 +23,19 @@ const D2D1_BITMAP_PROPERTIES1 BITMAP_PROPERTIES = {
 		96.f,
 		96.f,
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-		nullptr};
+		nullptr
+};
 
 } // namespace
 
 namespace {
 
-int frameCounter = 0;
+u64 frameCounter = 0;
 
 // I couldn't get the ModChecker working here to get the
 // pointers for joystickMagnitude so I just did the pointer
 // stuff here.
 const auto processRamStartAddr = reinterpret_cast<uintptr_t>(GetModuleHandle(nullptr));
-
-float leftStickVertical = 0;
-float leftStickHorizontal = 0;
-
-float joystickMagnitude = 0;
 
 } // namespace
 
@@ -154,7 +152,7 @@ void DXGISwapChainWrapper::renderWatermark() {
 	std::wstring frameCounterString = countFrames();
 	std::wstring fcAndFpsString = fmt::format(L"{} {}", fpsString, frameCounterString);
 
-	std::wstring stickMagnitudeString = getJoystickMagnitude(leftStickVertical, leftStickHorizontal);
+	std::wstring stickMagnitudeString = getJoystickMagnitude();
 
 	// Draw FPS and Frame Counter Shadow
 	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(2, textHeight + 2));
@@ -260,14 +258,11 @@ std::wstring DXGISwapChainWrapper::countFrames() {
 	return fmt::format(L"FC: {}", frameCounter);
 }
 
-std::wstring DXGISwapChainWrapper::getJoystickMagnitude(float leftStickVertical, float leftStickHorizontal) {
-	leftStickVertical = *reinterpret_cast<float *>(processRamStartAddr + 0x13FCC10);
-	leftStickHorizontal = *reinterpret_cast<float *>(processRamStartAddr + 0x13FCC14);
-
-	joystickMagnitude =
-			std::sqrt(leftStickVertical * leftStickVertical + leftStickHorizontal * leftStickHorizontal) * 0.001;
-
-	return fmt::format(L"Joystick Magnitude: {:.3f}", joystickMagnitude);
+std::wstring DXGISwapChainWrapper::getJoystickMagnitude() {
+	using namespace AutomataMod;
+	StickState *state = reinterpret_cast<StickState *>(processRamStartAddr + 0x13FCC10);
+	float magnitude = std::sqrt(state->leftY * state->leftY + state->leftX * state->leftX) * 0.001f;
+	return fmt::format(L"Joystick Magnitude: {:.3f}", magnitude);
 }
 
 DXGISwapChainWrapper::~DXGISwapChainWrapper() {}

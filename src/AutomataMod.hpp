@@ -5,23 +5,13 @@
 
 #include "ChipManager.hpp"
 #include "InventoryManager.hpp"
+#include "StickState.hpp"
 #include "com/FactoryWrapper.hpp"
 #include "infra/ModConfig.hpp"
 #include "infra/Util.hpp"
 #include "infra/defs.hpp"
 
 namespace AutomataMod {
-
-/**
- * X: -1000 full left, 1000 full right
- * Y: -1000 full up, 1000 full down
- */
-struct StickState {
-	float leftX;
-	float leftY;
-	float rightX;
-	float rightY;
-};
 
 class ModChecker {
 	Addresses _addresses;
