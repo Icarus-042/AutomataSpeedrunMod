@@ -74,7 +74,7 @@ HRESULT WINAPI D3D11CreateDeviceHooked(
 void handleKeyboardInput() {
 	keyboardInputThread = std::unique_ptr<std::thread>(new std::thread([]() {
 		AutomataMod::log(AutomataMod::LogLevel::LOG_INFO, "Keyboard input thread started");
-		while (true) {
+		while (!shouldStopChecker) {
 			if (GetAsyncKeyState(VK_HOME) != 0 && kbInputSetModActiveFlag) {
 				modChecker->setModActive(!modChecker->getModActive());
 				AutomataMod::log(AutomataMod::LogLevel::LOG_INFO, "Mod toggled from keyboard input");
@@ -83,7 +83,7 @@ void handleKeyboardInput() {
 				kbInputSetModActiveFlag = true;
 			}
 
-			std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(10));
+			std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(33));
 		}
 	}));
 }
