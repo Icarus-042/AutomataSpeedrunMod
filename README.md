@@ -119,3 +119,4 @@ If the repo has already been cloned then the submodule can be downloaded with `g
 - [Martino](https://github.com/Martymoose98) - Researching and providing an example implementation of the watermark Direct2D code, using hash check for executable version.
 - [remote-mine](https://github.com/remote-mine) - Adding fishing replacement logic for Mackerel runs
 - [DisrespectDwardo](https://github.com/DisrespectDwardo) - Authoring code for the FPS display
+- [aloyark](https://github.com/aloyark) - Adding stick magnitude display and keyboard toggle support
