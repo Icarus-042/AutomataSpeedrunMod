@@ -97,7 +97,7 @@ void DXGISwapChainWrapper::renderWatermark() {
 	}
 
 	FLOAT textHeight = _textFormat->GetFontSize();
-	FLOAT rectHeight = textHeight * 2; // * 2 for two lines, the mod name and the FPS count
+	FLOAT rectHeight = textHeight * 3; // * 3 for three lines, the mod name and the FPS count
 	std::wstring logo = getLogo();
 	float rectWidth = logo.length() * textHeight * FONT_WIDTH_MAGIC;
 
