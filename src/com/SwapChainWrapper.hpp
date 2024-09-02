@@ -37,6 +37,8 @@ class DXGISwapChainWrapper : public IDXGISwapChain1 {
 	void rotateVelocity();
 	void resetLocation(D2D1_SIZE_F &screenSize);
 	std::wstring calculateFps(float frameDelta);
+	std::wstring countFrames();
+	std::wstring getJoystickMagnitude(float leftStickVertical, float leftStickHorizontal);
 	std::wstring getLogo();
 
 public:

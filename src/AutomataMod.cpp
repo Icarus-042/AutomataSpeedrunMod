@@ -166,6 +166,8 @@ bool ModChecker::validCheckState() { return *_worldLoaded == 1 && *_playerNameSe
 bool ModChecker::getModActive() const { return _modActive; }
 
 void ModChecker::setModActive(bool active) {
+	if (!inPhase("START")) return;
+
 	if (!active) {
 		log(LogLevel::LOG_INFO, "Mod disabled by user input.");
 	} else {

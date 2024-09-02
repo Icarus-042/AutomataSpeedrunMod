@@ -8,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <winuser.h>
 
 #include "AutomataMod.hpp"
 #include "com/FactoryWrapper.hpp"
@@ -24,8 +25,10 @@ using namespace AutomataMod;
 namespace {
 
 WORD lastXInputButtons = 0;
+bool kbInputSetModActiveFlag = true;
 std::unique_ptr<DLL> xinput;
 std::unique_ptr<std::thread> checkerThread;
+std::unique_ptr<std::thread> keyboardInputThread;
 std::unique_ptr<IAT::IATHook> d3dCreateDeviceHook;
 std::unique_ptr<IAT::IATHook> dxgiCreateFactoryHook;
 std::unique_ptr<ModChecker> modChecker;
@@ -66,6 +69,23 @@ HRESULT WINAPI D3D11CreateDeviceHooked(
 			pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, ppDevice, pFeatureLevel,
 			ppImmediateContext
 	);
+}
+
+void handleKeyboardInput() {
+	keyboardInputThread = std::unique_ptr<std::thread>(new std::thread([]() {
+		AutomataMod::log(AutomataMod::LogLevel::LOG_INFO, "Keyboard input thread started");
+		while (true) {
+			if (GetAsyncKeyState(VK_HOME) != 0 && kbInputSetModActiveFlag) {
+				modChecker->setModActive(!modChecker->getModActive());
+				AutomataMod::log(AutomataMod::LogLevel::LOG_INFO, "Mod toggled from keyboard input");
+				kbInputSetModActiveFlag = false;
+			} else if (GetAsyncKeyState(VK_HOME) == 0) {
+				kbInputSetModActiveFlag = true;
+			}
+
+			std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(10));
+		}
+	}));
 }
 
 void init() {
@@ -124,6 +144,8 @@ void init() {
 			std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(250)); // check stuff 4 times a second
 		}
 	}));
+
+	handleKeyboardInput();
 }
 
 template <typename FuncPtr> FuncPtr getXinputFunc(const std::string &funcName) {
@@ -158,6 +180,11 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID) {
 		if (checkerThread) {
 			checkerThread->join();
 			checkerThread = nullptr;
+		}
+
+		if (keyboardInputThread) {
+			keyboardInputThread->join();
+			keyboardInputThread = nullptr;
 		}
 
 		if (factory)
