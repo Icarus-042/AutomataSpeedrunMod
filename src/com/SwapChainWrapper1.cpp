@@ -1,9 +1,9 @@
-#include "SwapChainWrapper.hpp"
+#include "SwapChainWrapper1.hpp"
+#include "AutomataMod.hpp"
 #include "StickState.hpp"
 #include "infra/Log.hpp"
 #include "infra/constants.hpp"
 #include "infra/defs.hpp"
-#include <AutomataMod.hpp>
 #include <fmt/format.h>
 #include <fmt/xchar.h>
 #include <random>
@@ -45,7 +45,7 @@ const auto processRamStartAddr = reinterpret_cast<uintptr_t>(GetModuleHandle(nul
 
 namespace DxWrappers {
 
-void DXGISwapChainWrapper::renderWatermark() {
+void DXGISwapChainWrapper1::renderWatermark() {
 	if (!_brush || !_shadowBrush) {
 		return;
 	}
@@ -182,7 +182,7 @@ void DXGISwapChainWrapper::renderWatermark() {
 }
 
 // Roates velocity in a random direction
-void DXGISwapChainWrapper::rotateVelocity() {
+void DXGISwapChainWrapper1::rotateVelocity() {
 	static std::random_device rd;
 	static const FLOAT pi = 3.141592f;
 	static std::mt19937 eng(rd());
@@ -194,7 +194,7 @@ void DXGISwapChainWrapper::rotateVelocity() {
 }
 
 // Resets location to the default position
-void DXGISwapChainWrapper::resetLocation(D2D1_SIZE_F &screenSize) {
+void DXGISwapChainWrapper1::resetLocation(D2D1_SIZE_F &screenSize) {
 	_location.x = screenSize.width * 0.0495f;
 	_location.y = screenSize.height * 0.105f;
 	_velocity = {0.f, 200.f};
@@ -202,7 +202,7 @@ void DXGISwapChainWrapper::resetLocation(D2D1_SIZE_F &screenSize) {
 
 // Calculates current frame rate and returns formatted FPS display string
 // frameDelta must be in milliseconds
-std::wstring DXGISwapChainWrapper::calculateFps(float frameDelta) {
+std::wstring DXGISwapChainWrapper1::calculateFps(float frameDelta) {
 	_frameTimes[_frameTimeIndex % _frameTimes.size()] = frameDelta;
 	++_frameTimeIndex;
 
@@ -236,7 +236,7 @@ std::wstring DXGISwapChainWrapper::calculateFps(float frameDelta) {
 	return fmt::format(L"{:.1f}FPS {:.2f}ms ({}) FC: {}", fps, frameDelta, mode, frameCounter);
 }
 
-std::wstring DXGISwapChainWrapper::getLogo() {
+std::wstring DXGISwapChainWrapper1::getLogo() {
 	std::wstring activatedString;
 	auto checker = AutomataMod::ModChecker::get();
 	if (checker && checker->getModActive()) {
@@ -255,16 +255,16 @@ std::wstring DXGISwapChainWrapper::getLogo() {
 	return fmt::format(L"VC3Mod {} ({})", AutomataMod::Constants::getWVersion(), activatedString);
 } // namespace DxWrappers
 
-std::wstring DXGISwapChainWrapper::getJoystickMagnitude() {
+std::wstring DXGISwapChainWrapper1::getJoystickMagnitude() {
 	using namespace AutomataMod;
 	StickState *state = reinterpret_cast<StickState *>(processRamStartAddr + 0x13FCC10);
 	float magnitude = std::sqrt(state->leftY * state->leftY + state->leftX * state->leftX) * 0.001f;
 	return fmt::format(L"Joystick Magnitude: {:.3f}", magnitude);
 }
 
-DXGISwapChainWrapper::~DXGISwapChainWrapper() {}
+DXGISwapChainWrapper1::~DXGISwapChainWrapper1() {}
 
-DXGISwapChainWrapper::DXGISwapChainWrapper(
+DXGISwapChainWrapper1::DXGISwapChainWrapper1(
 		IUnknown *pDevice, ComPtr<IDXGISwapChain1> target, ComPtr<ID2D1Factory2> d2dFactory
 ) {
 	_target = target;
@@ -311,12 +311,12 @@ DXGISwapChainWrapper::DXGISwapChainWrapper(
 	_lastFrame = std::chrono::high_resolution_clock::now();
 }
 
-void DXGISwapChainWrapper::toggleDvdMode(bool enabled) {
+void DXGISwapChainWrapper1::toggleDvdMode(bool enabled) {
 	rotateVelocity(); // Rotate the velocity in a random direction
 	this->_dvdMode = enabled;
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::QueryInterface(REFIID riid, void **ppvObject) {
+HRESULT __stdcall DXGISwapChainWrapper1::QueryInterface(REFIID riid, void **ppvObject) {
 	if (riid == __uuidof(IDXGISwapChain1) || riid == __uuidof(IDXGISwapChain) || riid == __uuidof(IDXGIDeviceSubObject) ||
 			riid == __uuidof(IDXGIObject) || riid == __uuidof(IUnknown)) {
 		this->AddRef();
@@ -328,12 +328,12 @@ HRESULT __stdcall DXGISwapChainWrapper::QueryInterface(REFIID riid, void **ppvOb
 	return E_NOINTERFACE;
 }
 
-ULONG __stdcall DXGISwapChainWrapper::AddRef() { return _refCounter.incrementRef(); }
+ULONG __stdcall DXGISwapChainWrapper1::AddRef() { return _refCounter.incrementRef(); }
 
-ULONG __stdcall DXGISwapChainWrapper::Release() {
+ULONG __stdcall DXGISwapChainWrapper1::Release() {
 	return _refCounter.decrementRef([this](ULONG refCount) {
 		if (refCount == 0) {
-			AutomataMod::log(AutomataMod::LogLevel::LOG_DEBUG, "DXGISwapChainWrapper ref count is zero. clearing.");
+			AutomataMod::log(AutomataMod::LogLevel::LOG_DEBUG, "DXGISwapChainWrapper1 ref count is zero. clearing.");
 			_shadowBrush = nullptr;
 			_brush = nullptr;
 			_textFormat = nullptr;
@@ -344,106 +344,106 @@ ULONG __stdcall DXGISwapChainWrapper::Release() {
 	});
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::SetPrivateData(REFGUID Name, UINT DataSize, const void *pData) {
+HRESULT __stdcall DXGISwapChainWrapper1::SetPrivateData(REFGUID Name, UINT DataSize, const void *pData) {
 	return _target->SetPrivateData(Name, DataSize, pData);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::SetPrivateDataInterface(REFGUID Name, const IUnknown *pUnknown) {
+HRESULT __stdcall DXGISwapChainWrapper1::SetPrivateDataInterface(REFGUID Name, const IUnknown *pUnknown) {
 	return _target->SetPrivateDataInterface(Name, pUnknown);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetPrivateData(REFGUID Name, UINT *pDataSize, void *pData) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetPrivateData(REFGUID Name, UINT *pDataSize, void *pData) {
 	return _target->GetPrivateData(Name, pDataSize, pData);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetParent(REFIID riid, void **ppParent) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetParent(REFIID riid, void **ppParent) {
 	return _target->GetParent(riid, ppParent);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetDevice(REFIID riid, void **ppDevice) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetDevice(REFIID riid, void **ppDevice) {
 	return _target->GetDevice(riid, ppDevice);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::Present(UINT SyncInterval, UINT Flags) {
+HRESULT __stdcall DXGISwapChainWrapper1::Present(UINT SyncInterval, UINT Flags) {
 	++frameCounter;
 	renderWatermark();
 	return _target->Present(SyncInterval, Flags);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetBuffer(UINT Buffer, REFIID riid, void **ppSurface) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetBuffer(UINT Buffer, REFIID riid, void **ppSurface) {
 	return _target->GetBuffer(Buffer, riid, ppSurface);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::SetFullscreenState(BOOL Fullscreen, IDXGIOutput *pTarget) {
+HRESULT __stdcall DXGISwapChainWrapper1::SetFullscreenState(BOOL Fullscreen, IDXGIOutput *pTarget) {
 	return _target->SetFullscreenState(Fullscreen, pTarget);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetFullscreenState(BOOL *pFullscreen, IDXGIOutput **ppTarget) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetFullscreenState(BOOL *pFullscreen, IDXGIOutput **ppTarget) {
 	return _target->GetFullscreenState(pFullscreen, ppTarget);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetDesc(DXGI_SWAP_CHAIN_DESC *pDesc) { return _target->GetDesc(pDesc); }
+HRESULT __stdcall DXGISwapChainWrapper1::GetDesc(DXGI_SWAP_CHAIN_DESC *pDesc) { return _target->GetDesc(pDesc); }
 
-HRESULT __stdcall DXGISwapChainWrapper::ResizeBuffers(
+HRESULT __stdcall DXGISwapChainWrapper1::ResizeBuffers(
 		UINT BufferCount, UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags
 ) {
 	_textFormat = nullptr; // Trigger a text format refresh
 	return _target->ResizeBuffers(BufferCount, Width, Height, NewFormat, SwapChainFlags);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::ResizeTarget(const DXGI_MODE_DESC *pNewTargetParameters) {
+HRESULT __stdcall DXGISwapChainWrapper1::ResizeTarget(const DXGI_MODE_DESC *pNewTargetParameters) {
 	return _target->ResizeTarget(pNewTargetParameters);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetContainingOutput(IDXGIOutput **ppOutput) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetContainingOutput(IDXGIOutput **ppOutput) {
 	return _target->GetContainingOutput(ppOutput);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetFrameStatistics(DXGI_FRAME_STATISTICS *pStats) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetFrameStatistics(DXGI_FRAME_STATISTICS *pStats) {
 	return _target->GetFrameStatistics(pStats);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetLastPresentCount(UINT *pLastPresentCount) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetLastPresentCount(UINT *pLastPresentCount) {
 	return _target->GetLastPresentCount(pLastPresentCount);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetDesc1(DXGI_SWAP_CHAIN_DESC1 *pDesc) { return _target->GetDesc1(pDesc); }
+HRESULT __stdcall DXGISwapChainWrapper1::GetDesc1(DXGI_SWAP_CHAIN_DESC1 *pDesc) { return _target->GetDesc1(pDesc); }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetFullscreenDesc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC *pDesc) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetFullscreenDesc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC *pDesc) {
 	return _target->GetFullscreenDesc(pDesc);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetHwnd(HWND *pHwnd) { return _target->GetHwnd(pHwnd); }
+HRESULT __stdcall DXGISwapChainWrapper1::GetHwnd(HWND *pHwnd) { return _target->GetHwnd(pHwnd); }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetCoreWindow(REFIID refiid, void **ppUnk) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetCoreWindow(REFIID refiid, void **ppUnk) {
 	return _target->GetCoreWindow(refiid, ppUnk);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::Present1(
+HRESULT __stdcall DXGISwapChainWrapper1::Present1(
 		UINT SyncInterval, UINT PresentFlags, const DXGI_PRESENT_PARAMETERS *pPresentParameters
 ) {
 	return _target->Present1(SyncInterval, PresentFlags, pPresentParameters);
 }
 
-BOOL __stdcall DXGISwapChainWrapper::IsTemporaryMonoSupported() { return _target->IsTemporaryMonoSupported(); }
+BOOL __stdcall DXGISwapChainWrapper1::IsTemporaryMonoSupported() { return _target->IsTemporaryMonoSupported(); }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetRestrictToOutput(IDXGIOutput **ppRestrictToOutput) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetRestrictToOutput(IDXGIOutput **ppRestrictToOutput) {
 	return _target->GetRestrictToOutput(ppRestrictToOutput);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::SetBackgroundColor(const DXGI_RGBA *pColor) {
+HRESULT __stdcall DXGISwapChainWrapper1::SetBackgroundColor(const DXGI_RGBA *pColor) {
 	return _target->SetBackgroundColor(pColor);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetBackgroundColor(DXGI_RGBA *pColor) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetBackgroundColor(DXGI_RGBA *pColor) {
 	return _target->GetBackgroundColor(pColor);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::SetRotation(DXGI_MODE_ROTATION Rotation) {
+HRESULT __stdcall DXGISwapChainWrapper1::SetRotation(DXGI_MODE_ROTATION Rotation) {
 	return _target->SetRotation(Rotation);
 }
 
-HRESULT __stdcall DXGISwapChainWrapper::GetRotation(DXGI_MODE_ROTATION *pRotation) {
+HRESULT __stdcall DXGISwapChainWrapper1::GetRotation(DXGI_MODE_ROTATION *pRotation) {
 	return _target->GetRotation(pRotation);
 }
 

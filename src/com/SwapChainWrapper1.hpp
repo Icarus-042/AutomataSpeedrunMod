@@ -12,7 +12,7 @@ namespace DxWrappers {
 
 using namespace Microsoft::WRL;
 
-class DXGISwapChainWrapper : public IDXGISwapChain1 {
+class DXGISwapChainWrapper1 : public IDXGISwapChain1 {
 	RefCounter _refCounter;
 	ComPtr<IDXGISwapChain1> _target;
 	ComPtr<ID2D1DeviceContext> _deviceContext;
@@ -38,8 +38,8 @@ class DXGISwapChainWrapper : public IDXGISwapChain1 {
 	std::wstring getLogo();
 
 public:
-	DXGISwapChainWrapper(IUnknown *pDevice, ComPtr<IDXGISwapChain1> target, ComPtr<ID2D1Factory2> d2dFactory);
-	virtual ~DXGISwapChainWrapper();
+	DXGISwapChainWrapper1(IUnknown *pDevice, ComPtr<IDXGISwapChain1> target, ComPtr<ID2D1Factory2> d2dFactory);
+	virtual ~DXGISwapChainWrapper1();
 	void toggleDvdMode(bool enabled);
 
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

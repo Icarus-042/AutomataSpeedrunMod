@@ -8,7 +8,7 @@
 #include "ChipManager.hpp"
 #include "InventoryManager.hpp"
 #include "StickState.hpp"
-#include "com/FactoryWrapper.hpp"
+#include "com/FactoryWrapper2.hpp"
 #include "infra/ModConfig.hpp"
 #include "infra/Util.hpp"
 #include "infra/defs.hpp"
@@ -52,7 +52,7 @@ public:
 	static void set(std::unique_ptr<ModChecker> &&ptr);
 	static ModChecker *get();
 	ModChecker(Addresses addrs);
-	void checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrapper> factoryWrapper);
+	void checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrapper2> factoryWrapper);
 
 	// Returns true if the game is in a state for modding inventory
 	bool validCheckState();

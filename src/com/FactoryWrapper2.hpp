@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RefCounter.hpp"
-#include "SwapChainWrapper.hpp"
+#include "SwapChainWrapper1.hpp"
 #include "WrapperPointer.hpp"
 #include <d2d1_2.h>
 #include <dwrite.h>
@@ -13,15 +13,15 @@ namespace DxWrappers {
 
 using namespace Microsoft::WRL;
 
-class DXGIFactoryWrapper : public IDXGIFactory2 {
+class DXGIFactoryWrapper2 : public IDXGIFactory2 {
 	RefCounter _refCounter;
 	ComPtr<IDXGIFactory2> _target;
 	ComPtr<ID2D1Factory2> _D2DFactory;
-	WrapperPointer<DXGISwapChainWrapper> _currentSwapChain;
+	WrapperPointer<DXGISwapChainWrapper1> _currentSwapChain;
 
 public:
-	DXGIFactoryWrapper(ComPtr<IDXGIFactory2> target);
-	virtual ~DXGIFactoryWrapper();
+	DXGIFactoryWrapper2(ComPtr<IDXGIFactory2> target);
+	virtual ~DXGIFactoryWrapper2();
 	void toggleDvdMode(bool enabled);
 
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;

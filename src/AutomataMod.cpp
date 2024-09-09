@@ -107,7 +107,7 @@ ModChecker::ModChecker(Addresses addrs)
 		, _modActive(true)
 		, _stickState(getOffset<StickState>(_addresses.stickState)) {}
 
-void ModChecker::checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrapper> factoryWrapper) {
+void ModChecker::checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrapper2> factoryWrapper) {
 	if (*_worldLoaded == 1 && *_playerNameSet == 1) {
 		if (_modActive) {
 			if (!_inventoryModded && inPhase("58_AB_BossArea_Fall")) {

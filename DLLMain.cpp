@@ -11,7 +11,7 @@
 #include <winuser.h>
 
 #include "AutomataMod.hpp"
-#include "com/FactoryWrapper.hpp"
+#include "com/FactoryWrapper2.hpp"
 #include "com/WrapperPointer.hpp"
 #include "infra/DLL.hpp"
 #include "infra/HashCheck.hpp"
@@ -31,7 +31,7 @@ std::unique_ptr<std::thread> checkerThread;
 std::unique_ptr<std::thread> keyboardInputThread;
 std::unique_ptr<IAT::IATHook> d3dCreateDeviceHook;
 std::unique_ptr<IAT::IATHook> dxgiCreateFactoryHook;
-WrapperPointer<DxWrappers::DXGIFactoryWrapper> factory;
+WrapperPointer<DxWrappers::DXGIFactoryWrapper2> factory;
 bool shouldStopChecker = false;
 
 // Need to intercept the DXGI factory to return our wrapper of it
@@ -45,7 +45,7 @@ HRESULT WINAPI CreateDXGIFactoryHooked(REFIID riid, void **ppFactory) {
 	Microsoft::WRL::ComPtr<IDXGIFactory2> pf;
 	HRESULT facResult = CreateDXGIFactory(riid, reinterpret_cast<void **>(pf.GetAddressOf()));
 	if (SUCCEEDED(facResult)) {
-		factory = new DxWrappers::DXGIFactoryWrapper(pf);
+		factory = new DxWrappers::DXGIFactoryWrapper2(pf);
 		factory->AddRef();
 		(*(IDXGIFactory2 **)ppFactory) = factory.get();
 		log(LogLevel::LOG_INFO, "Created DXGIFactoryWrapper");
