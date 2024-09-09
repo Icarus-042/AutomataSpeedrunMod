@@ -46,7 +46,6 @@ HRESULT WINAPI CreateDXGIFactoryHooked(REFIID riid, void **ppFactory) {
 	HRESULT facResult = CreateDXGIFactory(riid, reinterpret_cast<void **>(pf.GetAddressOf()));
 	if (SUCCEEDED(facResult)) {
 		factory = new DxWrappers::DXGIFactoryWrapper2(pf);
-		factory->AddRef();
 		(*(IDXGIFactory2 **)ppFactory) = factory.get();
 		log(LogLevel::LOG_INFO, "Created DXGIFactoryWrapper");
 	} else {

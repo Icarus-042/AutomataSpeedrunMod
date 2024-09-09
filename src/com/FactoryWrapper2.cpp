@@ -111,7 +111,6 @@ HRESULT __stdcall DXGIFactoryWrapper2::CreateSwapChainForHwnd(
 	}
 
 	_currentSwapChain = new DXGISwapChainWrapper1(pDevice, swapChain, _D2DFactory);
-	_currentSwapChain->AddRef();
 	*ppSwapChain = _currentSwapChain.get();
 	return result;
 }
