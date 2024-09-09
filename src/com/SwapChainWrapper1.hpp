@@ -20,6 +20,7 @@ class DXGISwapChainWrapper1 : public IDXGISwapChain1 {
 	ComPtr<IDWriteTextFormat> _textFormat;
 	ComPtr<ID2D1SolidColorBrush> _brush;
 	ComPtr<ID2D1SolidColorBrush> _shadowBrush;
+	ComPtr<IDWriteFactory> _dwFactory;
 
 	bool _dvdMode; // true when watermark should bounce around
 	D2D1_VECTOR_2F _location;

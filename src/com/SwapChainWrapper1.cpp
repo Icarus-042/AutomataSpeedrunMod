@@ -17,7 +17,6 @@ namespace {
 const float SCREEN_WIDTH = 1600.f;
 const float SCREEN_HEIGHT = 900.f;
 const float WATERMARK_TEXT_SIZE = 15.25f;
-const float FONT_WIDTH_MAGIC = 0.65f;
 
 const D2D1::ColorF WATERMARK_COLOR = D2D1::ColorF(0.803f, 0.784f, 0.690f, 1.f);
 const D2D1::ColorF SHADOW_COLOR = D2D1::ColorF(0.f, 0.f, 0.f, 0.3f);
@@ -80,16 +79,7 @@ void DXGISwapChainWrapper1::renderWatermark() {
 	float heightScale = WATERMARK_TEXT_SIZE * yscale;
 
 	if (!_textFormat) {
-		ComPtr<IDWriteFactory> dwFactory;
-		hr = DWriteCreateFactory(
-				DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(dwFactory.GetAddressOf())
-		);
-		if (!SUCCEEDED(hr)) {
-			AutomataMod::log(AutomataMod::LogLevel::LOG_ERROR, "Failed to create IDWriteFactory");
-			return;
-		}
-
-		hr = dwFactory->CreateTextFormat(
+		hr = _dwFactory->CreateTextFormat(
 				L"Consolas", NULL, DWRITE_FONT_WEIGHT_MEDIUM, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, heightScale,
 				L"en-us", _textFormat.GetAddressOf()
 		);
@@ -106,10 +96,35 @@ void DXGISwapChainWrapper1::renderWatermark() {
 	std::chrono::duration<float, std::milli> frameDeltaMilli = now - _lastFrame;
 	std::wstring fpsString = calculateFps(frameDeltaMilli.count());
 	std::wstring stickMagnitudeString = getJoystickMagnitude();
-	float rectWidth = std::max(logo.length(), fpsString.length()) * textHeight * FONT_WIDTH_MAGIC;
 
+	std::wstring *maxLenString;
+	if (fpsString.size() > logo.size()) {
+		maxLenString = &fpsString;
+	} else {
+		maxLenString = &logo;
+	}
+
+	// Use IDWriteTextLayout to get accurate text rectangle size
+	ComPtr<IDWriteTextLayout> layout;
+	hr = _dwFactory->CreateTextLayout(
+			maxLenString->c_str(), maxLenString->size(), _textFormat.Get(), screenSize.width, screenSize.height,
+			layout.GetAddressOf()
+	);
+	if (!SUCCEEDED(hr)) {
+		AutomataMod::log(AutomataMod::LogLevel::LOG_ERROR, "Failed to create IDWriteTextLayout");
+		return;
+	}
+
+	DWRITE_TEXT_METRICS metrics;
+	hr = layout->GetMetrics(&metrics);
+	if (!SUCCEEDED(hr)) {
+		AutomataMod::log(AutomataMod::LogLevel::LOG_ERROR, "Failed to get DWRITE_TEXT_METRICS");
+		return;
+	}
+
+	float rectWidth = metrics.width;
 	if (_dvdMode) {
-		float xBound = _location.x + rectWidth * xscale;
+		float xBound = _location.x + rectWidth;
 		float yBound = _location.y + rectHeight;
 		// bounce off edges of screen
 		if (_location.x <= 0.f || xBound >= screenSize.width)
@@ -233,7 +248,7 @@ std::wstring DXGISwapChainWrapper1::calculateFps(float frameDelta) {
 	}
 
 	float fps = 1000 * _frameTimes.size() / total;
-	return fmt::format(L"{:.1f}FPS {:.2f}ms ({}) FC: {}", fps, frameDelta, mode, frameCounter);
+	return fmt::format(L"{:.1f}FPS {:.2f}ms ({}) {}", fps, frameDelta, mode, frameCounter);
 }
 
 std::wstring DXGISwapChainWrapper1::getLogo() {
@@ -259,7 +274,7 @@ std::wstring DXGISwapChainWrapper1::getJoystickMagnitude() {
 	using namespace AutomataMod;
 	StickState *state = reinterpret_cast<StickState *>(processRamStartAddr + 0x13FCC10);
 	float magnitude = std::sqrt(state->leftY * state->leftY + state->leftX * state->leftX) * 0.001f;
-	return fmt::format(L"Joystick Magnitude: {:.3f}", magnitude);
+	return fmt::format(L"Stick: {:.3f}", magnitude);
 }
 
 DXGISwapChainWrapper1::~DXGISwapChainWrapper1() {}
@@ -305,6 +320,15 @@ DXGISwapChainWrapper1::DXGISwapChainWrapper1(
 		AutomataMod::log(
 				AutomataMod::LogLevel::LOG_ERROR, "Failed calling CreateSolidColorBrush. Error code: {}", queryResult
 		);
+		return;
+	}
+
+	queryResult = DWriteCreateFactory(
+			DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(_dwFactory.GetAddressOf())
+	);
+
+	if (!SUCCEEDED(queryResult)) {
+		AutomataMod::log(AutomataMod::LogLevel::LOG_ERROR, "Failed calling IDWriteFactory. Error code: {}", queryResult);
 		return;
 	}
 
