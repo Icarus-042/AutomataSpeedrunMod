@@ -1,5 +1,6 @@
 #include "AutomataMod.hpp"
 #include "infra/Log.hpp"
+#include "infra/constants.hpp"
 
 namespace {
 
@@ -170,7 +171,7 @@ u32 ModChecker::getWindowMode() const {
 	if (_windowMode) {
 		return *_windowMode;
 	}
-	return 0;
+	return Constants::INVALID_WINDOW_MODE;
 }
 
 bool ModChecker::getInMenu() const { return inPhase("START"); }
