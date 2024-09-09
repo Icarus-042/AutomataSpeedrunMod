@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
+#include <optional>
 #include <wrl/client.h>
 
 #include "ChipManager.hpp"
@@ -30,17 +32,13 @@ class ModChecker {
 	u8 *_unitData;
 	bool *_isLoading;
 	u32 *_windowMode;
-	u32 _lastWindowMode;
 	bool _modActive;
-	bool _lastModActive;
-	bool _inMenu;
-	bool _lastInMenu;
 	StickState *_stickState;
 
 	/// @brief Checks if game is in the given phase
 	/// @param str The phase to check
 	/// @return true if game is set in the given phase
-	bool inPhase(const char *phase);
+	bool inPhase(const char *phase) const;
 
 	void modifyChipInventory();
 	void addInventory(u32 itemId, u32 quantity);
@@ -50,6 +48,9 @@ class ModChecker {
 	template <typename T> T *getOffset(u64 offset) { return reinterpret_cast<T *>(_addresses.ramStart + offset); }
 
 public:
+	static void set(nullptr_t);
+	static void set(std::unique_ptr<ModChecker> &&ptr);
+	static ModChecker *get();
 	ModChecker(Addresses addrs);
 	void checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrapper> factoryWrapper);
 
@@ -58,6 +59,9 @@ public:
 
 	bool getModActive() const;
 	void setModActive(bool active);
+
+	u32 getWindowMode() const;
+	bool getInMenu() const;
 };
 
 } // namespace AutomataMod

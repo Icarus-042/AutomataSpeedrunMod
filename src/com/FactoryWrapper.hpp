@@ -23,9 +23,6 @@ public:
 	DXGIFactoryWrapper(ComPtr<IDXGIFactory2> target);
 	virtual ~DXGIFactoryWrapper();
 	void toggleDvdMode(bool enabled);
-	void setWindowMode(int mode);
-	void setModActive(bool active);
-	void setInMenu(bool inMenu);
 
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
 	virtual ULONG __stdcall AddRef(void) override;

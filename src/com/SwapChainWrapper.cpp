@@ -3,17 +3,21 @@
 #include "infra/Log.hpp"
 #include "infra/constants.hpp"
 #include "infra/defs.hpp"
+#include <AutomataMod.hpp>
 #include <fmt/format.h>
 #include <fmt/xchar.h>
 #include <random>
 #include <string>
+
+#undef max
+#include <algorithm>
 
 namespace {
 
 const float SCREEN_WIDTH = 1600.f;
 const float SCREEN_HEIGHT = 900.f;
 const float WATERMARK_TEXT_SIZE = 15.25f;
-const float FONT_WIDTH_MAGIC = 0.55f;
+const float FONT_WIDTH_MAGIC = 0.65f;
 
 const D2D1::ColorF WATERMARK_COLOR = D2D1::ColorF(0.803f, 0.784f, 0.690f, 1.f);
 const D2D1::ColorF SHADOW_COLOR = D2D1::ColorF(0.f, 0.f, 0.f, 0.3f);
@@ -99,7 +103,10 @@ void DXGISwapChainWrapper::renderWatermark() {
 	FLOAT textHeight = _textFormat->GetFontSize();
 	FLOAT rectHeight = textHeight * 3; // * 3 for three lines, the mod name and the FPS count
 	std::wstring logo = getLogo();
-	float rectWidth = logo.length() * textHeight * FONT_WIDTH_MAGIC;
+	std::chrono::duration<float, std::milli> frameDeltaMilli = now - _lastFrame;
+	std::wstring fpsString = calculateFps(frameDeltaMilli.count());
+	std::wstring stickMagnitudeString = getJoystickMagnitude();
+	float rectWidth = std::max(logo.length(), fpsString.length()) * textHeight * FONT_WIDTH_MAGIC;
 
 	if (_dvdMode) {
 		float xBound = _location.x + rectWidth * xscale;
@@ -147,23 +154,14 @@ void DXGISwapChainWrapper::renderWatermark() {
 	// Draw main text
 	_deviceContext->DrawText(logo.c_str(), logo.size(), _textFormat.Get(), rect, _brush.Get());
 
-	std::chrono::duration<float, std::milli> frameDeltaMilli = now - _lastFrame;
-	std::wstring fpsString = calculateFps(frameDeltaMilli.count());
-	std::wstring frameCounterString = countFrames();
-	std::wstring fcAndFpsString = fmt::format(L"{} {}", fpsString, frameCounterString);
-
-	std::wstring stickMagnitudeString = getJoystickMagnitude();
-
 	// Draw FPS and Frame Counter Shadow
 	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(2, textHeight + 2));
-	_deviceContext->DrawText(
-			fcAndFpsString.c_str(), fcAndFpsString.length(), _textFormat.Get(), rect, _shadowBrush.Get()
-	);
+	_deviceContext->DrawText(fpsString.c_str(), fpsString.length(), _textFormat.Get(), rect, _shadowBrush.Get());
 	_deviceContext->SetTransform(root);
 
 	// Draw FPS and Frame Counter
 	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(0, textHeight));
-	_deviceContext->DrawText(fcAndFpsString.c_str(), fcAndFpsString.length(), _textFormat.Get(), rect, _brush.Get());
+	_deviceContext->DrawText(fpsString.c_str(), fpsString.length(), _textFormat.Get(), rect, _brush.Get());
 
 	// Draw Joystick Magnitude shadow
 	_deviceContext->SetTransform(D2D1::Matrix3x2F::Translation(2, 2 + (textHeight * 2)));
@@ -216,47 +214,46 @@ std::wstring DXGISwapChainWrapper::calculateFps(float frameDelta) {
 	if (total < 1.f)
 		total = 1.f;
 
-	wchar_t mode;
-	switch (_windowMode) {
-	case 0:
-		mode = L'F';
-		break;
-	case 1:
-		mode = L'W';
-		break;
-	case 2:
-		mode = L'B';
-		break;
-	default:
-		mode = L'?';
-		break;
+	wchar_t mode = L'?';
+	if (auto checker = AutomataMod::ModChecker::get()) {
+		switch (checker->getWindowMode()) {
+		case 0:
+			mode = L'F';
+			break;
+		case 1:
+			mode = L'W';
+			break;
+		case 2:
+			mode = L'B';
+			break;
+		default:
+			mode = L'?';
+			break;
+		}
 	}
 
 	float fps = 1000 * _frameTimes.size() / total;
-	return fmt::format(L"{:.1f}FPS {:.2f}ms ({})", fps, frameDelta, mode);
+	return fmt::format(L"{:.1f}FPS {:.2f}ms ({}) FC: {}", fps, frameDelta, mode, frameCounter);
 }
 
 std::wstring DXGISwapChainWrapper::getLogo() {
 	std::wstring activatedString;
-	if (_modActive) {
+	auto checker = AutomataMod::ModChecker::get();
+	if (checker && checker->getModActive()) {
 		activatedString = L"Active";
 	} else {
 		activatedString = L"Inactive";
 	}
 
-	if (_inMenu) {
+	if (checker && checker->getInMenu()) {
 		return fmt::format(
-				L"VC3Mod {} ({}), Hold X & Y to toggle mod", AutomataMod::Constants::getWVersion(), activatedString
+				L"VC3Mod {} ({}), Press Home or hold X & Y to toggle mod", AutomataMod::Constants::getWVersion(),
+				activatedString
 		);
 	}
 
 	return fmt::format(L"VC3Mod {} ({})", AutomataMod::Constants::getWVersion(), activatedString);
 } // namespace DxWrappers
-
-std::wstring DXGISwapChainWrapper::countFrames() {
-	++frameCounter;
-	return fmt::format(L"FC: {}", frameCounter);
-}
 
 std::wstring DXGISwapChainWrapper::getJoystickMagnitude() {
 	using namespace AutomataMod;
@@ -272,8 +269,6 @@ DXGISwapChainWrapper::DXGISwapChainWrapper(
 ) {
 	_target = target;
 	_dvdMode = false;
-	_windowMode = -1;
-	_modActive = true;
 
 	ComPtr<IDXGIDevice> dxgiDevice;
 	HRESULT queryResult =
@@ -320,12 +315,6 @@ void DXGISwapChainWrapper::toggleDvdMode(bool enabled) {
 	rotateVelocity(); // Rotate the velocity in a random direction
 	this->_dvdMode = enabled;
 }
-
-void DXGISwapChainWrapper::setWindowMode(int mode) { _windowMode = mode; }
-
-void DXGISwapChainWrapper::setModActive(bool active) { _modActive = active; }
-
-void DXGISwapChainWrapper::setInMenu(bool inMenu) { _inMenu = inMenu; }
 
 HRESULT __stdcall DXGISwapChainWrapper::QueryInterface(REFIID riid, void **ppvObject) {
 	if (riid == __uuidof(IDXGISwapChain1) || riid == __uuidof(IDXGISwapChain) || riid == __uuidof(IDXGIDeviceSubObject) ||
@@ -376,6 +365,7 @@ HRESULT __stdcall DXGISwapChainWrapper::GetDevice(REFIID riid, void **ppDevice) 
 }
 
 HRESULT __stdcall DXGISwapChainWrapper::Present(UINT SyncInterval, UINT Flags) {
+	++frameCounter;
 	renderWatermark();
 	return _target->Present(SyncInterval, Flags);
 }

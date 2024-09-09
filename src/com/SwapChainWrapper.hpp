@@ -22,9 +22,6 @@ class DXGISwapChainWrapper : public IDXGISwapChain1 {
 	ComPtr<ID2D1SolidColorBrush> _shadowBrush;
 
 	bool _dvdMode; // true when watermark should bounce around
-	int _windowMode;
-	bool _modActive;
-	bool _inMenu;
 	D2D1_VECTOR_2F _location;
 	D2D1_VECTOR_2F _velocity;
 	std::chrono::time_point<std::chrono::high_resolution_clock> _lastFrame;
@@ -37,7 +34,6 @@ class DXGISwapChainWrapper : public IDXGISwapChain1 {
 	void rotateVelocity();
 	void resetLocation(D2D1_SIZE_F &screenSize);
 	std::wstring calculateFps(float frameDelta);
-	std::wstring countFrames();
 	std::wstring getJoystickMagnitude();
 	std::wstring getLogo();
 
@@ -45,9 +41,6 @@ public:
 	DXGISwapChainWrapper(IUnknown *pDevice, ComPtr<IDXGISwapChain1> target, ComPtr<ID2D1Factory2> d2dFactory);
 	virtual ~DXGISwapChainWrapper();
 	void toggleDvdMode(bool enabled);
-	void setWindowMode(int mode);
-	void setModActive(bool active);
-	void setInMenu(bool inMenu);
 
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject) override;
 	virtual ULONG __stdcall AddRef(void) override;

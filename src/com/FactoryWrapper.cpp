@@ -22,21 +22,6 @@ void DXGIFactoryWrapper::toggleDvdMode(bool enabled) {
 		_currentSwapChain->toggleDvdMode(enabled);
 }
 
-void DXGIFactoryWrapper::setWindowMode(int mode) {
-	if (_currentSwapChain)
-		_currentSwapChain->setWindowMode(mode);
-}
-
-void DXGIFactoryWrapper::setModActive(bool active) {
-	if (_currentSwapChain)
-		_currentSwapChain->setModActive(active);
-}
-
-void DXGIFactoryWrapper::setInMenu(bool inMenu) {
-	if (_currentSwapChain)
-		_currentSwapChain->setInMenu(inMenu);
-}
-
 HRESULT __stdcall DXGIFactoryWrapper::QueryInterface(REFIID riid, void **ppvObject) {
 	if (riid == __uuidof(IDXGIFactory2) || riid == __uuidof(IDXGIFactory1) || riid == __uuidof(IDXGIFactory) ||
 			riid == __uuidof(IDXGIObject) || riid == __uuidof(IUnknown)) {

@@ -31,7 +31,6 @@ std::unique_ptr<std::thread> checkerThread;
 std::unique_ptr<std::thread> keyboardInputThread;
 std::unique_ptr<IAT::IATHook> d3dCreateDeviceHook;
 std::unique_ptr<IAT::IATHook> dxgiCreateFactoryHook;
-std::unique_ptr<ModChecker> modChecker;
 WrapperPointer<DxWrappers::DXGIFactoryWrapper> factory;
 bool shouldStopChecker = false;
 
@@ -75,6 +74,7 @@ void handleKeyboardInput() {
 	keyboardInputThread = std::unique_ptr<std::thread>(new std::thread([]() {
 		while (!shouldStopChecker) {
 			if (GetAsyncKeyState(VK_HOME) != 0 && kbInputSetModActiveFlag) {
+				ModChecker *modChecker = ModChecker::get();
 				modChecker->setModActive(!modChecker->getModActive());
 				AutomataMod::log(AutomataMod::LogLevel::LOG_INFO, "Mod toggled from keyboard input");
 				kbInputSetModActiveFlag = false;
@@ -133,9 +133,10 @@ void init() {
 		return;
 	}
 
-	modChecker = std::make_unique<ModChecker>(addresses);
+	AutomataMod::ModChecker::set(std::make_unique<ModChecker>(addresses));
 
 	checkerThread = std::unique_ptr<std::thread>(new std::thread([]() {
+		ModChecker *modChecker = ModChecker::get();
 		while (!shouldStopChecker) {
 			if (modChecker && factory)
 				modChecker->checkStuff(factory.getComPtr());
@@ -186,17 +187,11 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID) {
 			keyboardInputThread = nullptr;
 		}
 
-		if (factory)
-			factory = nullptr;
-
-		if (d3dCreateDeviceHook)
-			d3dCreateDeviceHook = nullptr;
-
-		if (dxgiCreateFactoryHook)
-			dxgiCreateFactoryHook = nullptr;
-
-		if (xinput)
-			xinput = nullptr;
+		AutomataMod::ModChecker::set(nullptr);
+		factory = nullptr;
+		d3dCreateDeviceHook = nullptr;
+		dxgiCreateFactoryHook = nullptr;
+		xinput = nullptr;
 	}
 
 	return TRUE;
@@ -253,6 +248,7 @@ DWORD WINAPI XInputGetState(_In_ DWORD dwUserIndex, _Out_ XINPUT_STATE *pState) 
 	DWORD result = ptr(dwUserIndex, pState);
 
 	// Check for mod toggle button combo
+	ModChecker *modChecker = ModChecker::get();
 	if (result == ERROR_SUCCESS && dwUserIndex == 0 && modChecker && pState && !modChecker->validCheckState()) {
 		// check if new state diff from last state
 		if (pState->Gamepad.wButtons != lastXInputButtons) {

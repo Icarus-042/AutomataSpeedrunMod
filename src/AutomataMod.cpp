@@ -8,11 +8,13 @@ namespace {
 // buffer size: 24 bytes
 const size_t UNIT_DATA_SIZE = 24;
 
+std::unique_ptr<AutomataMod::ModChecker> checker;
+
 } // namespace
 
 namespace AutomataMod {
 
-bool ModChecker::inPhase(const char *phase) { return strncmp(_currentPhase, phase, strlen(phase)) == 0; }
+bool ModChecker::inPhase(const char *phase) const { return strncmp(_currentPhase, phase, strlen(phase)) == 0; }
 
 void ModChecker::modifyChipInventory() {
 	size_t tauntCount = 0;
@@ -82,6 +84,10 @@ bool ModChecker::adjustFishInventory(bool shouldDeleteFish) {
 	return false;
 }
 
+void ModChecker::set(nullptr_t) { checker = nullptr; }
+void ModChecker::set(std::unique_ptr<ModChecker> &&ptr) { checker = std::forward<std::unique_ptr<ModChecker>>(ptr); }
+ModChecker *ModChecker::get() { return checker.get(); }
+
 ModChecker::ModChecker(Addresses addrs)
 		: _addresses(addrs)
 		, _inventoryManager(getOffset<Inventory::Item>(_addresses.itemTableStart))
@@ -97,31 +103,11 @@ ModChecker::ModChecker(Addresses addrs)
 		, _unitData(getOffset<u8>(_addresses.unitData))
 		, _isLoading(getOffset<bool>(_addresses.isLoading))
 		, _windowMode(getOffset<u32>(_addresses.windowMode))
-		, _lastWindowMode(0)
 		, _modActive(true)
-		, _lastModActive(true)
-		, _inMenu(true)
-		, _lastInMenu(true)
 		, _stickState(getOffset<StickState>(_addresses.stickState)) {}
 
 void ModChecker::checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrapper> factoryWrapper) {
-	if (_lastWindowMode != *_windowMode) {
-		factoryWrapper->setWindowMode(*_windowMode);
-		_lastWindowMode = *_windowMode;
-	}
-
-	if (_lastModActive != _modActive) {
-		factoryWrapper->setModActive(_modActive);
-		_lastModActive = _modActive;
-	}
-
-	if (_lastInMenu != _inMenu) {
-		factoryWrapper->setInMenu(_inMenu);
-		_lastInMenu = _inMenu;
-	}
-
 	if (*_worldLoaded == 1 && *_playerNameSet == 1) {
-		_inMenu = false;
 		if (_modActive) {
 			if (!_inventoryModded && inPhase("58_AB_BossArea_Fall")) {
 				log(LogLevel::LOG_INFO, "Detected we are in 58_AB_BossArea_Fall. Giving VC3 inventory");
@@ -140,7 +126,6 @@ void ModChecker::checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrappe
 	}
 
 	if (*_worldLoaded == 0 && *_playerNameSet == 0) {
-		_inMenu = true;
 		if (_inventoryModded || _tauntChipsAdded || _fishAdded) {
 			log(LogLevel::LOG_INFO, "Detected the run has been reset. Resetting inventory checker.");
 			log(LogLevel::LOG_INFO, "-------------------------------------------------------------------------------");
@@ -152,6 +137,9 @@ void ModChecker::checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrappe
 
 	if (*_isLoading) {
 		if (!_dvdModeEnabled) {
+			// The flag we use for isLoading actually gets toggled every frame.
+			// Because of this we can't read it during present().
+			// If we do the logo will spam all over the screen from constant resetting.
 			factoryWrapper->toggleDvdMode(true);
 			_dvdModeEnabled = true;
 		}
@@ -166,7 +154,8 @@ bool ModChecker::validCheckState() { return *_worldLoaded == 1 && *_playerNameSe
 bool ModChecker::getModActive() const { return _modActive; }
 
 void ModChecker::setModActive(bool active) {
-	if (!inPhase("START")) return;
+	if (!getInMenu())
+		return;
 
 	if (!active) {
 		log(LogLevel::LOG_INFO, "Mod disabled by user input.");
@@ -175,5 +164,14 @@ void ModChecker::setModActive(bool active) {
 	}
 	_modActive = active;
 }
+
+u32 ModChecker::getWindowMode() const {
+	if (_windowMode) {
+		return *_windowMode;
+	}
+	return 0;
+}
+
+bool ModChecker::getInMenu() const { return inPhase("START"); }
 
 } // namespace AutomataMod
