@@ -137,7 +137,8 @@ void ModChecker::checkStuff(Microsoft::WRL::ComPtr<DxWrappers::DXGIFactoryWrappe
 
 	if (*_isLoading) {
 		if (!_dvdModeEnabled) {
-			// The flag we use for isLoading actually gets toggled every frame.
+			// The flag we use for isLoading is always true during present();
+			// Likely this flag isn't what we think it is.
 			// Because of this we can't read it during present().
 			// If we do the logo will spam all over the screen from constant resetting.
 			factoryWrapper->toggleDvdMode(true);
