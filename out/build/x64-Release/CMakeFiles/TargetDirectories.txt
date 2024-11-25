@@ -1,6 +1,0 @@
-C:/Users/Icarus/source/repos/AutomataSpeedrunModFork/out/build/x64-Release/CMakeFiles/xinput1_4.dir
-C:/Users/Icarus/source/repos/AutomataSpeedrunModFork/out/build/x64-Release/CMakeFiles/edit_cache.dir
-C:/Users/Icarus/source/repos/AutomataSpeedrunModFork/out/build/x64-Release/CMakeFiles/rebuild_cache.dir
-C:/Users/Icarus/source/repos/AutomataSpeedrunModFork/out/build/x64-Release/fmt/CMakeFiles/fmt.dir
-C:/Users/Icarus/source/repos/AutomataSpeedrunModFork/out/build/x64-Release/fmt/CMakeFiles/edit_cache.dir
-C:/Users/Icarus/source/repos/AutomataSpeedrunModFork/out/build/x64-Release/fmt/CMakeFiles/rebuild_cache.dir
