@@ -1,0 +1,22 @@
+# ninja log v5
+5	327	7542569397493190	CMakeFiles/xinput1_4.dir/src/ChipManager.cpp.obj	33b3c93f572f0eda
+29	351	7542569397752326	CMakeFiles/xinput1_4.dir/src/infra/Util.cpp.obj	4c92d25423fdf8ef
+8	352	7542569397752326	CMakeFiles/xinput1_4.dir/src/InventoryManager.cpp.obj	99c92f9c0c34bdfb
+33	398	7542569398230718	CMakeFiles/xinput1_4.dir/src/infra/constants.cpp.obj	741ae8cad8a69ef3
+12	680	7542569401038208	CMakeFiles/xinput1_4.dir/src/com/RefCounter.cpp.obj	f62f071a9353db6f
+25	793	7542569402164444	CMakeFiles/xinput1_4.dir/src/infra/IAT.cpp.obj	f339988cf0061922
+23	887	7542569403091337	CMakeFiles/xinput1_4.dir/src/infra/HashCheck.cpp.obj	543afebf20f49ec0
+21	905	7542569403270741	CMakeFiles/xinput1_4.dir/src/infra/DLL.cpp.obj	c4bf86dd72300c63
+37	1577	7542569409968385	fmt/CMakeFiles/fmt.dir/src/os.cc.obj	2c063e46778da6f5
+35	1719	7542569411403582	fmt/CMakeFiles/fmt.dir/src/format.cc.obj	183dcf281f85e1c9
+1719	1753	7542569411762386	fmt/fmt.lib	bd33bd5a5d323560
+10	2077	7542569414971680	CMakeFiles/xinput1_4.dir/src/com/FactoryWrapper2.cpp.obj	1ae67a4ca430b7ca
+3	2139	7542569415609543	CMakeFiles/xinput1_4.dir/src/AutomataMod.cpp.obj	a35b956ae0daf669
+1	2261	7542569416825482	CMakeFiles/xinput1_4.dir/DLLMain.cpp.obj	36841af7d5f45734
+27	2309	7542569417318323	CMakeFiles/xinput1_4.dir/src/infra/Log.cpp.obj	ec1133c4927305d9
+14	2771	7542569421923614	CMakeFiles/xinput1_4.dir/src/com/SwapChainWrapper1.cpp.obj	848805ceaa5e2e7f
+2771	2933	7542569423579914	xinput1_4.dll	54cc674177e5d2e5
+2771	2933	7542569423579914	xinput1_4.lib	54cc674177e5d2e5
+15	246	7542570328830308	CMakeFiles/xinput1_4.dir/src/infra/constants.cpp.obj	741ae8cad8a69ef3
+246	397	7542570328830308	xinput1_4.dll	54cc674177e5d2e5
+246	397	7542570328830308	xinput1_4.lib	54cc674177e5d2e5
